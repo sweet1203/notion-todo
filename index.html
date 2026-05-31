@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌸 오늘의 할일</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pink:    #ff8fab;
+      --pink-lt: #ffb3c6;
+      --peach:   #ffd6a5;
+      --mint:    #b5ead7;
+      --lavender:#c7b8ea;
+      --bg:      #fff0f5;
+      --card:    #ffffff;
+      --text:    #5a4a6a;
+      --sub:     #a094b0;
+      --done-bg: #f3f0f8;
+      --radius:  18px;
+      --shadow:  0 4px 20px rgba(200,150,180,.18);
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      padding-bottom: 60px;
+    }
+
+    /* ── 헤더 ── */
+    header {
+      background: linear-gradient(135deg, var(--pink) 0%, var(--lavender) 100%);
+      padding: 28px 20px 22px;
+      text-align: center;
+      box-shadow: 0 3px 14px rgba(255,100,150,.2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      user-select: none;
+    }
+    header h1 {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.3px;
+      text-shadow: 0 2px 6px rgba(0,0,0,.12);
+    }
+    #today-label {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,.85);
+      margin-top: 4px;
+    }
+    #stats {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 10px;
+    }
+    .stat-chip {
+      background: rgba(255,255,255,.28);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 0.75rem;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* ── 설정(연동) 버튼 ── */
+    #settings-btn {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: rgba(255,255,255,.25);
+      border: none;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      font-size: 1.15rem;
+      cursor: pointer;
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s, transform .15s;
+    }
+    #settings-btn:active { transform: scale(.9); }
+    #settings-btn.connected { background: rgba(141,225,192,.95); }
+    /* 연동 상태 라벨 */
+    #conn-label {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,.9);
+      margin-top: 8px;
+      min-height: 16px;
+    }
+
+    /* ── 입력 영역 ── */
+    #input-area {
+      max-width: 480px;
+      margin: 20px auto 0;
+      padding: 0 16px;
+    }
+    #input-row { display: flex; gap: 10px; }
+    #new-todo {
+      flex: 1;
+      border: 2.5px solid var(--pink-lt);
+      border-radius: var(--radius);
+      padding: 13px 18px;
+      font-size: 1rem;
+      color: var(--text);
+      background: var(--card);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      box-shadow: var(--shadow);
+    }
+    #new-todo::placeholder { color: #cdb8d6; }
+    #new-todo:focus {
+      border-color: var(--pink);
+      box-shadow: 0 0 0 4px rgba(255,143,171,.18);
+    }
+    #add-btn {
+      background: linear-gradient(135deg, var(--pink), var(--lavender));
+      border: none;
+      border-radius: var(--radius);
+      width: 52px; height: 52px;
+      font-size: 1.6rem;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: transform .15s;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    #add-btn:active { transform: scale(.92); }
+
+    /* ── 필터 탭 ── */
+    #filter-tabs {
+      max-width: 480px;
+      margin: 16px auto 0;
+      padding: 0 16px;
+      display: flex;
+      gap: 8px;
+    }
+    .tab {
+      flex: 1;
+      padding: 8px 0;
+      border: 2px solid var(--pink-lt);
+      border-radius: 30px;
+      background: var(--card);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--sub);
+      cursor: pointer;
+      transition: all .18s;
+      text-align: center;
+    }
+    .tab.active {
+      background: linear-gradient(135deg, var(--pink), var(--lavender));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(255,143,171,.3);
+    }
+
+    /* ── 리스트 ── */
+    #list-wrap {
+      max-width: 480px;
+      margin: 16px auto 0;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ── 할일 카드 ── */
+    .todo-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--pink-lt);
+      animation: fadeIn .25s ease;
+      position: relative;
+    }
+    .todo-card.syncing { opacity: .65; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .todo-card.done {
+      background: var(--done-bg);
+      border-left-color: var(--mint);
+      opacity: .85;
+    }
+
+    /* 커스텀 체크박스 */
+    .cb-wrap {
+      position: relative;
+      width: 26px; height: 26px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .cb-wrap input[type=checkbox] {
+      position: absolute;
+      opacity: 0;
+      width: 100%; height: 100%;
+      margin: 0; cursor: pointer;
+      z-index: 2;
+    }
+    .cb-box {
+      width: 26px; height: 26px;
+      border: 2.5px solid var(--pink-lt);
+      border-radius: 8px;
+      background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      transition: all .18s;
+      pointer-events: none;
+    }
+    .cb-wrap input:checked + .cb-box {
+      background: linear-gradient(135deg, var(--mint), #8de1c0);
+      border-color: transparent;
+    }
+    .cb-wrap input:checked + .cb-box::after { content: '✓'; color: #fff; font-weight: 800; }
+
+    /* 텍스트 */
+    .todo-body { flex: 1; min-width: 0; }
+    .todo-text {
+      font-size: 0.98rem;
+      font-weight: 600;
+      line-height: 1.4;
+      word-break: break-all;
+    }
+    .todo-card.done .todo-text {
+      text-decoration: line-through;
+      color: var(--sub);
+    }
+    .todo-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 5px;
+    }
+    .meta-chip {
+      font-size: 0.68rem;
+      border-radius: 10px;
+      padding: 2px 8px;
+      font-weight: 600;
+    }
+    .chip-created { background: #f0e6ff; color: var(--lavender); }
+    .chip-done    { background: #d9f5ea; color: #4caf8a; }
+    .chip-notion  { background: #e8f0fe; color: #4a6fa5; }
+
+    /* 삭제 버튼 */
+    .del-btn {
+      background: none;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      color: #ddc8e8;
+      padding: 2px 4px;
+      border-radius: 8px;
+      transition: color .15s, background .15s;
+      flex-shrink: 0;
+      align-self: flex-start;
+    }
+    .del-btn:hover { color: var(--pink); background: #ffedf2; }
+
+    /* ── 빈 상태 ── */
+    #empty {
+      text-align: center;
+      padding: 50px 20px 20px;
+      color: var(--sub);
+      display: none;
+    }
+    #empty .emoji { font-size: 3rem; display: block; margin-bottom: 12px; }
+    #empty p { font-size: 0.9rem; line-height: 1.6; }
+
+    /* ── 완료 삭제 버튼 ── */
+    #clear-done {
+      display: block;
+      margin: 20px auto 0;
+      background: none;
+      border: 2px solid #e8d5f0;
+      border-radius: 20px;
+      padding: 7px 20px;
+      font-size: 0.78rem;
+      color: var(--sub);
+      cursor: pointer;
+      transition: all .18s;
+    }
+    #clear-done:hover { border-color: var(--pink); color: var(--pink); }
+
+    /* ── 토스트 알림 ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #5a4a6a;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      z-index: 999;
+      transition: transform .3s ease;
+      max-width: 90vw;
+      box-shadow: 0 4px 16px rgba(0,0,0,.2);
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── 연동 설정 모달 ── */
+    #modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(90,74,106,.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      padding: 20px;
+      overflow-y: auto;
+    }
+    #modal-overlay.show { display: flex; }
+    #modal {
+      background: #fff;
+      border-radius: 24px;
+      padding: 28px 26px;
+      width: min(400px, 92vw);
+      box-shadow: 0 12px 40px rgba(0,0,0,.18);
+      animation: popIn .2s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(.92); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    #modal h2 { font-size: 1.18rem; color: var(--text); margin-bottom: 6px; }
+    #modal > p  { font-size: 0.8rem; color: var(--sub); margin-bottom: 16px; line-height: 1.5; }
+
+    /* 인앱 설정 가이드 */
+    #guide {
+      background: #faf5ff;
+      border: 1.5px solid #eaddf7;
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      font-size: 0.78rem;
+    }
+    #guide summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--lavender);
+      list-style: none;
+    }
+    #guide summary::-webkit-details-marker { display: none; }
+    #guide ol { margin: 12px 0 4px; padding-left: 18px; color: var(--text); line-height: 1.7; }
+    #guide a { color: var(--pink); font-weight: 700; }
+
+    .modal-input {
+      width: 100%;
+      border: 2.5px solid var(--pink-lt);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      color: var(--text);
+      outline: none;
+      margin-bottom: 12px;
+      transition: border-color .2s;
+    }
+    .modal-input:focus { border-color: var(--pink); }
+    .modal-label {
+      display: block;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--sub);
+      margin-bottom: 5px;
+    }
+    #modal-err {
+      font-size: 0.78rem;
+      color: var(--pink);
+      margin-bottom: 10px;
+      min-height: 18px;
+      line-height: 1.4;
+    }
+    .modal-btns { display: flex; gap: 10px; }
+    .modal-btns button {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius);
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s;
+    }
+    .modal-btns button:active { transform: scale(.95); }
+    #modal-cancel { background: #f3f0f8; color: var(--sub); }
+    #modal-ok {
+      background: linear-gradient(135deg, var(--pink), var(--lavender));
+      color: #fff;
+    }
+    #modal-disconnect {
+      display: none;
+      width: 100%;
+      margin-top: 14px;
+      background: none;
+      border: 2px solid #f0d5e0;
+      border-radius: var(--radius);
+      padding: 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--sub);
+      cursor: pointer;
+      transition: all .18s;
+    }
+    #modal-disconnect:hover { border-color: var(--pink); color: var(--pink); }
+    .privacy-note {
+      font-size: 0.7rem;
+      color: var(--sub);
+      margin-top: 14px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    @media (min-width: 520px) {
+      header h1 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 연동 설정 모달 -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h2>🔗 Notion 연동</h2>
+    <p>내 Notion 토큰과 DB ID를 입력하면 이 기기의 할일이 내 Notion DB와 양방향 동기화됩니다.</p>
+
+    <details id="guide">
+      <summary>📖 처음이세요? 설정 가이드 보기</summary>
+      <ol>
+        <li>① <a id="tpl-link" href="#" target="_blank" rel="noopener">할일 템플릿</a>을 열어 우측 상단 <b>Duplicate</b>로 내 워크스페이스에 복제</li>
+        <li>② <a href="https://www.notion.so/my-integrations" target="_blank" rel="noopener">my-integrations</a>에서 <b>New integration</b> 생성 후 <b>Internal Integration Token</b> 복사</li>
+        <li>③ 복제한 DB 페이지 → 우측 상단 <b>⋯</b> → <b>Connections</b> → 방금 만든 integration 연결</li>
+        <li>④ DB 페이지 URL 중 <code>notion.so/…/<b>여기32자리</b>?v=…</code> 부분이 Database ID</li>
+      </ol>
+    </details>
+
+    <label class="modal-label" for="modal-token">Notion Integration Token</label>
+    <input id="modal-token" class="modal-input" type="password" placeholder="secret_... 또는 ntn_..." autocomplete="off" />
+
+    <label class="modal-label" for="modal-db">Database ID</label>
+    <input id="modal-db" class="modal-input" type="text" placeholder="예: 36f0fb7d31de8037af78cf3134d6c0b4" autocomplete="off" />
+
+    <div id="modal-err"></div>
+    <div class="modal-btns">
+      <button id="modal-cancel">취소</button>
+      <button id="modal-ok">연결</button>
+    </div>
+    <button id="modal-disconnect">연결 해제 (게스트 모드로)</button>
+
+    <p class="privacy-note">🔒 토큰은 이 브라우저에만 저장되며 서버에 보관되지 않습니다.<br>integration에 연결한 DB에만 접근할 수 있어요.</p>
+  </div>
+</div>
+
+<!-- 토스트 -->
+<div id="toast"></div>
+
+<!-- 헤더 -->
+<header id="header-area">
+  <h1>🌸 오늘의 할일</h1>
+  <div id="today-label"></div>
+  <div id="stats">
+    <span class="stat-chip" id="stat-total">전체 0</span>
+    <span class="stat-chip" id="stat-done">완료 0</span>
+    <span class="stat-chip" id="stat-left">남은 것 0</span>
+  </div>
+  <div id="conn-label"></div>
+  <button id="settings-btn" title="Notion 연동 설정" aria-label="Notion 연동 설정">⚙️</button>
+</header>
+
+<!-- 입력 -->
+<div id="input-area">
+  <div id="input-row">
+    <input id="new-todo" type="text" placeholder="할일을 입력하세요 ✏️" maxlength="100" />
+    <button id="add-btn" aria-label="추가">＋</button>
+  </div>
+</div>
+
+<!-- 필터 탭 -->
+<div id="filter-tabs">
+  <button class="tab active" data-filter="all">전체</button>
+  <button class="tab" data-filter="active">진행중</button>
+  <button class="tab" data-filter="done">완료</button>
+</div>
+
+<!-- 할일 목록 -->
+<div id="list-wrap"></div>
+
+<button id="clear-done">✨ 완료된 항목 지우기</button>
+
+<!-- 빈 상태 -->
+<div id="empty">
+  <span class="emoji">🌷</span>
+  <p>할일이 없어요!<br>위에서 새 할일을 추가해보세요 😊</p>
+</div>
+
+<script>
+  /* ───────── 상수 ───────── */
+  const STORAGE_KEY = 'kawaii_todos_v1';
+  const CREDS_KEY   = 'kawaii_notion_creds';
+  const API_BASE    = '/api';
+  // 배포 시 아래 링크를 복제용 Notion 템플릿 URL로 교체하세요.
+  const TEMPLATE_URL = 'https://www.notion.so/';
+
+  /* ───────── 상태 ───────── */
+  let todos       = [];
+  let filter      = 'all';
+  let notionMode  = false;   // true = Notion 연동 모드
+  let notionToken = null;
+  let notionDb    = null;
+  let isSyncing   = false;
+
+  /* ───────── localStorage ───────── */
+  function isStorageAvailable() {
+    try { localStorage.setItem('__t__','1'); localStorage.removeItem('__t__'); return true; }
+    catch { return false; }
+  }
+  const HAS_STORAGE = isStorageAvailable();
+
+  function loadLocal() {
+    if (!HAS_STORAGE) return [];
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+  function saveLocal(list) {
+    if (!HAS_STORAGE) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+
+  /* ───────── 자격증명 저장 ───────── */
+  function loadCreds() {
+    if (!HAS_STORAGE) return null;
+    try { return JSON.parse(localStorage.getItem(CREDS_KEY)); }
+    catch { return null; }
+  }
+  function saveCreds(token, dbId) {
+    if (!HAS_STORAGE) return;
+    localStorage.setItem(CREDS_KEY, JSON.stringify({ token, dbId }));
+  }
+  function clearCreds() {
+    if (HAS_STORAGE) localStorage.removeItem(CREDS_KEY);
+  }
+
+  /* ───────── ID 생성 ───────── */
+  let _idCounter = Date.now();
+  function nextId() { return ++_idCounter; }
+
+  /* ───────── 날짜 포맷 ───────── */
+  function fmtDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const p = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}.${p(d.getMonth()+1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${'일월화수목금토'[d.getDay()]})`;
+  }
+
+  /* ───────── 토스트 ───────── */
+  let _toastTimer;
+  function toast(msg, duration = 2200) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => el.classList.remove('show'), duration);
+  }
+
+  /* ───────── XSS 방어 ───────── */
+  function esc(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;')
+              .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+  }
+
+  /* ═══════════════════════════════════
+     Notion API 호출 헬퍼
+  ═══════════════════════════════════ */
+  function apiHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${notionToken}`,
+      'X-Notion-Db': notionDb,
+    };
+  }
+
+  async function apiFetch(path, opts = {}) {
+    const res = await fetch(API_BASE + path, {
+      ...opts,
+      headers: { ...apiHeaders(), ...(opts.headers || {}) },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `API 오류 ${res.status}`);
+    }
+    return res.json();
+  }
+
+  /* ── Notion에서 목록 동기화 ── */
+  async function syncFromNotion() {
+    isSyncing = true;
+    updateConnUI();
+    try {
+      const data = await apiFetch('/todos');
+      todos = data.todos.map(t => ({
+        id: t.notionId,
+        notionId: t.notionId,
+        text: t.text,
+        createdAt: t.createdAt,
+        doneAt: t.doneAt,
+      }));
+      render();
+      toast('✅ Notion과 동기화됐어요');
+    } catch (e) {
+      toast(`⚠️ 동기화 실패: ${e.message}`);
+      throw e;
+    } finally {
+      isSyncing = false;
+      updateConnUI();
+    }
+  }
+
+  /* ── Notion에 새 항목 생성 ── */
+  async function notionCreate(todo) {
+    const data = await apiFetch('/todos', {
+      method: 'POST',
+      body: JSON.stringify({ text: todo.text, createdAt: todo.createdAt }),
+    });
+    return data.notionId;
+  }
+
+  /* ── Notion 완료일 업데이트 ── */
+  async function notionPatch(notionId, doneAt) {
+    await apiFetch('/todos', {
+      method: 'PATCH',
+      body: JSON.stringify({ notionId, doneAt }),
+    });
+  }
+
+  /* ── Notion 삭제(아카이브) ── */
+  async function notionDelete(notionId) {
+    await apiFetch('/todos', {
+      method: 'DELETE',
+      body: JSON.stringify({ notionId }),
+    });
+  }
+
+  /* ═══════════════════════════════════
+     CRUD
+  ═══════════════════════════════════ */
+  async function add(text) {
+    text = text.trim();
+    if (!text) return;
+
+    const now = new Date().toISOString();
+    const todo = { id: nextId(), text, createdAt: now, doneAt: null, notionId: null };
+    todos.unshift(todo);
+    render();
+
+    if (notionMode) {
+      try {
+        const notionId = await notionCreate(todo);
+        todo.notionId = notionId;
+        todo.id = notionId;
+        render();
+        toast('📝 Notion에 저장됐어요');
+      } catch (e) {
+        toast(`⚠️ Notion 저장 실패: ${e.message}`);
+      }
+    } else {
+      saveLocal(todos);
+    }
+  }
+
+  async function toggle(id, checked) {
+    const todo = todos.find(t => t.id === id);
+    if (!todo) return;
+
+    const doneAt = checked ? new Date().toISOString() : null;
+    todo.doneAt = doneAt;
+    render();
+
+    if (notionMode && todo.notionId) {
+      try {
+        await notionPatch(todo.notionId, doneAt);
+        toast(checked ? '✅ Notion에 완료 기록됐어요' : '↩️ 완료 취소됐어요');
+      } catch (e) {
+        toast(`⚠️ Notion 업데이트 실패: ${e.message}`);
+      }
+    } else {
+      saveLocal(todos);
+    }
+  }
+
+  async function del(id) {
+    const todo = todos.find(t => t.id === id);
+    todos = todos.filter(t => t.id !== id);
+    render();
+
+    if (notionMode && todo?.notionId) {
+      try {
+        await notionDelete(todo.notionId);
+        toast('🗑 Notion에서도 삭제됐어요');
+      } catch (e) {
+        toast(`⚠️ Notion 삭제 실패: ${e.message}`);
+      }
+    } else {
+      saveLocal(todos);
+    }
+  }
+
+  function clearDone() {
+    const doneTodos = todos.filter(t => t.doneAt);
+    todos = todos.filter(t => !t.doneAt);
+    render();
+
+    if (notionMode) {
+      doneTodos.forEach(t => {
+        if (t.notionId) notionDelete(t.notionId).catch(() => {});
+      });
+      toast(`🧹 Notion에서 완료 ${doneTodos.length}개 삭제됐어요`);
+    } else {
+      saveLocal(todos);
+    }
+  }
+
+  /* ═══════════════════════════════════
+     렌더링
+  ═══════════════════════════════════ */
+  function filtered() {
+    if (filter === 'active') return todos.filter(t => !t.doneAt);
+    if (filter === 'done')   return todos.filter(t =>  t.doneAt);
+    return todos;
+  }
+
+  function render() {
+    const list  = document.getElementById('list-wrap');
+    const empty = document.getElementById('empty');
+    list.innerHTML = '';
+
+    const items = filtered();
+    if (items.length === 0) {
+      empty.style.display = 'block';
+    } else {
+      empty.style.display = 'none';
+      items.forEach(todo => {
+        const card = document.createElement('div');
+        card.className = 'todo-card' + (todo.doneAt ? ' done' : '');
+        card.dataset.id = todo.id;
+
+        card.innerHTML = `
+          <label class="cb-wrap" aria-label="${todo.doneAt ? '완료 취소' : '완료 표시'}">
+            <input type="checkbox" ${todo.doneAt ? 'checked' : ''} />
+            <span class="cb-box"></span>
+          </label>
+          <div class="todo-body">
+            <div class="todo-text">${esc(todo.text)}</div>
+            <div class="todo-meta">
+              <span class="meta-chip chip-created">📅 ${fmtDate(todo.createdAt)}</span>
+              ${todo.doneAt ? `<span class="meta-chip chip-done">✅ ${fmtDate(todo.doneAt)}</span>` : ''}
+              ${notionMode && todo.notionId ? `<span class="meta-chip chip-notion">📒 Notion</span>` : ''}
+            </div>
+          </div>
+          <button class="del-btn" aria-label="삭제">🗑</button>
+        `;
+
+        card.querySelector('input[type=checkbox]').addEventListener('change', e => {
+          toggle(todo.id, e.target.checked);
+        });
+        card.querySelector('.del-btn').addEventListener('click', () => del(todo.id));
+
+        list.appendChild(card);
+      });
+    }
+    updateStats();
+  }
+
+  function updateStats() {
+    const total = todos.length;
+    const done  = todos.filter(t => t.doneAt).length;
+    document.getElementById('stat-total').textContent = `전체 ${total}`;
+    document.getElementById('stat-done').textContent  = `완료 ${done}`;
+    document.getElementById('stat-left').textContent  = `남은 것 ${total - done}`;
+  }
+
+  function updateConnUI() {
+    const btn   = document.getElementById('settings-btn');
+    const label = document.getElementById('conn-label');
+    btn.classList.toggle('connected', notionMode);
+    if (notionMode) {
+      label.textContent = isSyncing ? '🔄 동기화 중...' : '📒 Notion 연동 중';
+    } else {
+      label.textContent = '💾 게스트 모드 (이 기기에만 저장)';
+    }
+  }
+
+  /* ═══════════════════════════════════
+     연동 모달
+  ═══════════════════════════════════ */
+  function showModal() {
+    const overlay = document.getElementById('modal-overlay');
+    document.getElementById('modal-err').textContent = '';
+    document.getElementById('tpl-link').href = TEMPLATE_URL;
+
+    const disconnectBtn = document.getElementById('modal-disconnect');
+    if (notionMode) {
+      document.getElementById('modal-token').value = notionToken || '';
+      document.getElementById('modal-db').value    = notionDb || '';
+      document.getElementById('modal-ok').textContent = '다시 연결';
+      disconnectBtn.style.display = 'block';
+    } else {
+      document.getElementById('modal-token').value = '';
+      document.getElementById('modal-db').value    = '';
+      document.getElementById('modal-ok').textContent = '연결';
+      disconnectBtn.style.display = 'none';
+    }
+
+    overlay.classList.add('show');
+    setTimeout(() => document.getElementById('modal-token').focus(), 100);
+  }
+  function hideModal() {
+    document.getElementById('modal-overlay').classList.remove('show');
+  }
+
+  /* ── DB ID 정규화 (URL 붙여넣어도 32자리 추출) ── */
+  function normalizeDbId(raw) {
+    const s = (raw || '').trim();
+    // URL이면 32자리 hex 추출
+    const m = s.match(/[0-9a-fA-F]{32}/);
+    if (m) return m[0];
+    return s.replace(/-/g, '');
+  }
+
+  async function connectNotion(token, dbId) {
+    const errEl = document.getElementById('modal-err');
+    const okBtn = document.getElementById('modal-ok');
+    errEl.textContent = '';
+
+    token = (token || '').trim();
+    dbId  = normalizeDbId(dbId);
+    if (!token) { errEl.textContent = 'Notion 토큰을 입력해주세요.'; return; }
+    if (!dbId)  { errEl.textContent = 'Database ID를 입력해주세요.'; return; }
+
+    const prevLabel = okBtn.textContent;
+    okBtn.textContent = '확인 중...';
+    try {
+      const res = await fetch(`${API_BASE}/auth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, dbId }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        notionToken = token;
+        notionDb    = dbId;
+        notionMode  = true;
+        saveCreds(token, dbId);
+        hideModal();
+        updateConnUI();
+        try { await syncFromNotion(); }
+        catch { /* 동기화 실패 토스트는 syncFromNotion 내부에서 처리 */ }
+      } else {
+        errEl.textContent = data.error || '연결에 실패했어요.';
+      }
+    } catch {
+      errEl.textContent = '서버 연결 실패. 잠시 후 다시 시도해주세요.';
+    } finally {
+      okBtn.textContent = prevLabel;
+    }
+  }
+
+  function disconnect() {
+    notionMode  = false;
+    notionToken = null;
+    notionDb    = null;
+    clearCreds();
+    todos = loadLocal();
+    render();
+    updateConnUI();
+    hideModal();
+    toast('👋 게스트 모드로 전환됐어요');
+  }
+
+  /* ═══════════════════════════════════
+     이벤트 바인딩
+  ═══════════════════════════════════ */
+  document.getElementById('settings-btn').addEventListener('click', showModal);
+
+  // 추가 버튼
+  document.getElementById('add-btn').addEventListener('click', () => {
+    const inp = document.getElementById('new-todo');
+    add(inp.value);
+    inp.value = '';
+    inp.focus();
+  });
+
+  // Enter 키 (IME 중복 방지)
+  document.getElementById('new-todo').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.isComposing) document.getElementById('add-btn').click();
+  });
+
+  // 필터 탭
+  document.getElementById('filter-tabs').addEventListener('click', e => {
+    const tab = e.target.closest('.tab');
+    if (!tab) return;
+    filter = tab.dataset.filter;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+    render();
+  });
+
+  // 완료 항목 전체 삭제
+  document.getElementById('clear-done').addEventListener('click', () => {
+    const count = todos.filter(t => t.doneAt).length;
+    if (count === 0) return;
+    if (confirm(`완료된 항목 ${count}개를 모두 삭제할까요?`)) clearDone();
+  });
+
+  // 모달 버튼
+  document.getElementById('modal-cancel').addEventListener('click', hideModal);
+  document.getElementById('modal-ok').addEventListener('click', () => {
+    connectNotion(
+      document.getElementById('modal-token').value,
+      document.getElementById('modal-db').value
+    );
+  });
+  document.getElementById('modal-disconnect').addEventListener('click', () => {
+    if (confirm('연결을 해제하고 게스트 모드로 전환할까요?\n저장된 토큰이 이 브라우저에서 삭제됩니다.')) disconnect();
+  });
+  document.getElementById('modal-db').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.isComposing) document.getElementById('modal-ok').click();
+  });
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-overlay')) hideModal();
+  });
+
+  /* ═══════════════════════════════════
+     초기화
+  ═══════════════════════════════════ */
+  document.getElementById('today-label').textContent = todayStr();
+
+  const savedCreds = loadCreds();
+  if (savedCreds && savedCreds.token && savedCreds.dbId) {
+    notionToken = savedCreds.token;
+    notionDb    = savedCreds.dbId;
+    notionMode  = true;
+    updateConnUI();
+    syncFromNotion().catch(() => {
+      // 토큰 만료/권한 변경 등으로 실패 시 게스트로 폴백 (자격증명은 보존)
+      notionMode = false;
+      todos = loadLocal();
+      render();
+      updateConnUI();
+      toast('⚠️ 자동 연동 실패 — 게스트 모드입니다. ⚙️에서 다시 연결하세요.');
+    });
+  } else {
+    todos = loadLocal();
+    render();
+    updateConnUI();
+  }
+</script>
+</body>
+</html>
