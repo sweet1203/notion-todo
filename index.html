@@ -473,7 +473,7 @@
     <details id="guide">
       <summary>📖 처음이세요? 설정 가이드 보기</summary>
       <ol>
-        <li>① <a id="tpl-link" href="#" target="_blank" rel="noopener">할일 템플릿</a>을 열어 우측 상단 <b>Duplicate</b>로 내 워크스페이스에 복제</li>
+        <li>① <a id="tpl-link" href="#" target="_blank" rel="noopener">할일 템플릿</a>을 열어 내 Notion에 <b>Duplicate</b>(복제)한 뒤 사용</li>
         <li>② <a href="https://www.notion.so/my-integrations" target="_blank" rel="noopener">my-integrations</a>에서 <b>New integration</b> 생성 후 <b>Internal Integration Token</b> 복사</li>
         <li>③ 복제한 DB 페이지 → 우측 상단 <b>⋯</b> → <b>Connections</b> → 방금 만든 integration 연결</li>
         <li>④ DB 페이지 URL 중 <code>notion.so/…/<b>여기32자리</b>?v=…</code> 부분이 Database ID</li>
@@ -544,8 +544,7 @@
   const STORAGE_KEY = 'kawaii_todos_v1';
   const CREDS_KEY   = 'kawaii_notion_creds';
   const API_BASE    = '/api';
-  // 배포 시 아래 링크를 복제용 Notion 템플릿 URL로 교체하세요.
-  const TEMPLATE_URL = 'https://www.notion.so/';
+  const TEMPLATE_URL = 'https://majestic-squash-faf.notion.site/5390fb7d31de836ea5e281723888a85f?v=8e90fb7d31de821a8e1c08a630c36dcc&source=copy_link';
 
   /* ───────── 상태 ───────── */
   let todos       = [];

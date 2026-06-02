@@ -27,8 +27,10 @@
 | `작성일`  | Date  | 생성 시각 |
 | `완료일`  | Date  | 완료 시각 (비어 있으면 미완료) |
 
-> 속성 **이름과 타입이 정확히 일치**해야 합니다. 가장 쉬운 방법은 제공된 템플릿을 복제하는 것입니다.
-> 템플릿 URL: `index.html`의 `TEMPLATE_URL` 상수와 README의 이 줄을 실제 공개 템플릿 링크로 교체하세요.
+> 속성 **이름과 타입이 정확히 일치**해야 합니다. 가장 쉬운 방법은 아래 템플릿을 자기 Notion에 복제해서 사용하는 것입니다.
+> 템플릿 URL: <https://majestic-squash-faf.notion.site/5390fb7d31de836ea5e281723888a85f?v=8e90fb7d31de821a8e1c08a630c36dcc&source=copy_link>
+
+템플릿을 열고 우측 상단의 **Duplicate**(복제)를 눌러 내 Notion 워크스페이스로 가져온 뒤, 그 DB를 integration과 연결해서 사용하세요.
 
 직접 만들 경우: 새 데이터베이스 생성 → 기본 `Name`(Title) 속성을 `할일`로 이름 변경 → `작성일`(Date)·`완료일`(Date) 속성 추가.
 
