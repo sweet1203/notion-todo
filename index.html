@@ -3,23 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🌸 오늘의 할일</title>
+  <title>✅ 오늘의 할일</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --pink:    #ff8fab;
-      --pink-lt: #ffb3c6;
-      --peach:   #ffd6a5;
-      --mint:    #b5ead7;
-      --lavender:#c7b8ea;
-      --bg:      #fff0f5;
-      --card:    #ffffff;
-      --text:    #5a4a6a;
-      --sub:     #a094b0;
-      --done-bg: #f3f0f8;
-      --radius:  18px;
-      --shadow:  0 4px 20px rgba(200,150,180,.18);
+      --orange:    #ff7a18;
+      --orange-lt: #ff9a4d;
+      --orange-dk: #ef5f00;
+      --green:     #18c06a;
+      --green-dk:  #11a258;
+      --blue:      #3b82f6;
+      --bg:        #f4f6f9;
+      --card:      #ffffff;
+      --line:      #e8ebf0;
+      --text:      #1d2530;
+      --sub:       #8a93a1;
+      --done-bg:   #f1faf4;
+      --radius:    16px;
+      --shadow:    0 4px 18px rgba(28,40,60,.06);
+      --shadow-lg: 0 10px 30px rgba(28,40,60,.10);
     }
 
     body {
@@ -32,64 +35,78 @@
 
     /* ── 헤더 ── */
     header {
-      background: linear-gradient(135deg, var(--pink) 0%, var(--lavender) 100%);
-      padding: 28px 20px 22px;
+      background: var(--card);
+      padding: 26px 20px 22px;
       text-align: center;
-      box-shadow: 0 3px 14px rgba(255,100,150,.2);
+      box-shadow: 0 1px 0 var(--line), 0 6px 20px rgba(28,40,60,.04);
       position: sticky;
       top: 0;
       z-index: 100;
       user-select: none;
     }
+    /* 헤더 하단 컬러 포인트 바 (주황→그린) */
+    header::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--orange) 0%, #ffc24d 45%, var(--green) 100%);
+    }
     header h1 {
       font-size: 1.55rem;
       font-weight: 800;
-      color: #fff;
-      letter-spacing: -0.3px;
-      text-shadow: 0 2px 6px rgba(0,0,0,.12);
+      color: var(--text);
+      letter-spacing: -0.4px;
     }
     #today-label {
       font-size: 0.78rem;
-      color: rgba(255,255,255,.85);
+      color: var(--sub);
       margin-top: 4px;
     }
     #stats {
       display: flex;
       justify-content: center;
-      gap: 16px;
-      margin-top: 10px;
+      gap: 10px;
+      margin-top: 12px;
     }
     .stat-chip {
-      background: rgba(255,255,255,.28);
       border-radius: 20px;
-      padding: 3px 12px;
+      padding: 4px 13px;
       font-size: 0.75rem;
-      color: #fff;
-      font-weight: 600;
+      font-weight: 700;
     }
+    #stat-total { background: #eef1f6; color: #5b6675; }
+    #stat-done  { background: #e6f8ef; color: var(--green-dk); }
+    #stat-left  { background: #fff1e6; color: var(--orange-dk); }
 
     /* ── 설정(연동) 버튼 ── */
     #settings-btn {
       position: absolute;
       top: 16px; right: 16px;
-      background: rgba(255,255,255,.25);
+      background: #f1f3f7;
       border: none;
       width: 40px; height: 40px;
       border-radius: 50%;
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       cursor: pointer;
-      color: #fff;
+      color: var(--text);
       display: flex; align-items: center; justify-content: center;
-      transition: background .2s, transform .15s;
+      transition: background .2s, transform .15s, box-shadow .2s;
     }
+    #settings-btn:hover { background: #e9edf3; }
     #settings-btn:active { transform: scale(.9); }
-    #settings-btn.connected { background: rgba(141,225,192,.95); }
+    #settings-btn.connected {
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(24,192,106,.35);
+    }
     /* 연동 상태 라벨 */
     #conn-label {
       font-size: 0.72rem;
-      color: rgba(255,255,255,.9);
-      margin-top: 8px;
+      color: var(--sub);
+      margin-top: 10px;
       min-height: 16px;
+      font-weight: 600;
     }
 
     /* ── 입력 영역 ── */
@@ -101,7 +118,7 @@
     #input-row { display: flex; gap: 10px; }
     #new-todo {
       flex: 1;
-      border: 2.5px solid var(--pink-lt);
+      border: 2px solid var(--line);
       border-radius: var(--radius);
       padding: 13px 18px;
       font-size: 1rem;
@@ -111,24 +128,25 @@
       transition: border-color .2s, box-shadow .2s;
       box-shadow: var(--shadow);
     }
-    #new-todo::placeholder { color: #cdb8d6; }
+    #new-todo::placeholder { color: #b3bbc6; }
     #new-todo:focus {
-      border-color: var(--pink);
-      box-shadow: 0 0 0 4px rgba(255,143,171,.18);
+      border-color: var(--orange);
+      box-shadow: 0 0 0 4px rgba(255,122,24,.15);
     }
     #add-btn {
-      background: linear-gradient(135deg, var(--pink), var(--lavender));
+      background: linear-gradient(135deg, var(--orange-lt), var(--orange-dk));
       border: none;
       border-radius: var(--radius);
       width: 52px; height: 52px;
       font-size: 1.6rem;
       color: #fff;
       cursor: pointer;
-      box-shadow: var(--shadow);
-      transition: transform .15s;
+      box-shadow: 0 6px 16px rgba(255,122,24,.30);
+      transition: transform .15s, box-shadow .2s;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
+    #add-btn:hover { box-shadow: 0 8px 20px rgba(255,122,24,.42); }
     #add-btn:active { transform: scale(.92); }
 
     /* ── 필터 탭 ── */
@@ -141,8 +159,8 @@
     }
     .tab {
       flex: 1;
-      padding: 8px 0;
-      border: 2px solid var(--pink-lt);
+      padding: 9px 0;
+      border: 2px solid var(--line);
       border-radius: 30px;
       background: var(--card);
       font-size: 0.8rem;
@@ -152,11 +170,21 @@
       transition: all .18s;
       text-align: center;
     }
+    .tab:hover { border-color: #d7dce3; }
     .tab.active {
-      background: linear-gradient(135deg, var(--pink), var(--lavender));
+      background: linear-gradient(135deg, var(--orange-lt), var(--orange-dk));
       border-color: transparent;
       color: #fff;
-      box-shadow: 0 3px 10px rgba(255,143,171,.3);
+      box-shadow: 0 4px 12px rgba(255,122,24,.30);
+    }
+    /* 필터별 원색 포인트 */
+    .tab[data-filter="active"].active {
+      background: linear-gradient(135deg, #5b9bff, var(--blue));
+      box-shadow: 0 4px 12px rgba(59,130,246,.32);
+    }
+    .tab[data-filter="done"].active {
+      background: linear-gradient(135deg, var(--green), var(--green-dk));
+      box-shadow: 0 4px 12px rgba(24,192,106,.32);
     }
 
     /* ── 리스트 ── */
@@ -172,16 +200,19 @@
     /* ── 할일 카드 ── */
     .todo-card {
       background: var(--card);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--orange);
       border-radius: var(--radius);
       padding: 14px 16px;
       display: flex;
       align-items: flex-start;
       gap: 12px;
       box-shadow: var(--shadow);
-      border-left: 4px solid var(--pink-lt);
       animation: fadeIn .25s ease;
       position: relative;
+      transition: transform .15s, box-shadow .2s;
     }
+    .todo-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
     .todo-card.syncing { opacity: .65; }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(8px); }
@@ -189,8 +220,7 @@
     }
     .todo-card.done {
       background: var(--done-bg);
-      border-left-color: var(--mint);
-      opacity: .85;
+      border-left-color: var(--green);
     }
 
     /* 커스텀 체크박스 */
@@ -209,7 +239,7 @@
     }
     .cb-box {
       width: 26px; height: 26px;
-      border: 2.5px solid var(--pink-lt);
+      border: 2.5px solid #d7dce3;
       border-radius: 8px;
       background: #fff;
       display: flex; align-items: center; justify-content: center;
@@ -218,7 +248,7 @@
       pointer-events: none;
     }
     .cb-wrap input:checked + .cb-box {
-      background: linear-gradient(135deg, var(--mint), #8de1c0);
+      background: linear-gradient(135deg, var(--green), var(--green-dk));
       border-color: transparent;
     }
     .cb-wrap input:checked + .cb-box::after { content: '✓'; color: #fff; font-weight: 800; }
@@ -247,9 +277,9 @@
       padding: 2px 8px;
       font-weight: 600;
     }
-    .chip-created { background: #f0e6ff; color: var(--lavender); }
-    .chip-done    { background: #d9f5ea; color: #4caf8a; }
-    .chip-notion  { background: #e8f0fe; color: #4a6fa5; }
+    .chip-created { background: #fff1e6; color: var(--orange-dk); }
+    .chip-done    { background: #e6f8ef; color: var(--green-dk); }
+    .chip-notion  { background: #e8f0fe; color: #2f6fe0; }
 
     /* 삭제 버튼 */
     .del-btn {
@@ -257,14 +287,14 @@
       border: none;
       font-size: 1.1rem;
       cursor: pointer;
-      color: #ddc8e8;
+      color: #c2c9d3;
       padding: 2px 4px;
       border-radius: 8px;
       transition: color .15s, background .15s;
       flex-shrink: 0;
       align-self: flex-start;
     }
-    .del-btn:hover { color: var(--pink); background: #ffedf2; }
+    .del-btn:hover { color: #f5453d; background: #ffeceb; }
 
     /* ── 빈 상태 ── */
     #empty {
@@ -281,7 +311,7 @@
       display: block;
       margin: 20px auto 0;
       background: none;
-      border: 2px solid #e8d5f0;
+      border: 2px solid var(--line);
       border-radius: 20px;
       padding: 7px 20px;
       font-size: 0.78rem;
@@ -289,7 +319,7 @@
       cursor: pointer;
       transition: all .18s;
     }
-    #clear-done:hover { border-color: var(--pink); color: var(--pink); }
+    #clear-done:hover { border-color: var(--orange); color: var(--orange-dk); }
 
     /* ── 토스트 알림 ── */
     #toast {
@@ -297,7 +327,7 @@
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%) translateY(80px);
-      background: #5a4a6a;
+      background: #232b36;
       color: #fff;
       padding: 10px 20px;
       border-radius: 20px;
@@ -315,7 +345,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(90,74,106,.45);
+      background: rgba(20,28,40,.5);
       z-index: 200;
       align-items: center;
       justify-content: center;
@@ -343,8 +373,8 @@
 
     /* 인앱 설정 가이드 */
     #guide {
-      background: #faf5ff;
-      border: 1.5px solid #eaddf7;
+      background: #f6f8fa;
+      border: 1px solid var(--line);
       border-radius: 14px;
       padding: 10px 14px;
       margin-bottom: 16px;
@@ -353,25 +383,25 @@
     #guide summary {
       cursor: pointer;
       font-weight: 700;
-      color: var(--lavender);
+      color: var(--orange-dk);
       list-style: none;
     }
     #guide summary::-webkit-details-marker { display: none; }
     #guide ol { margin: 12px 0 4px; padding-left: 18px; color: var(--text); line-height: 1.7; }
-    #guide a { color: var(--pink); font-weight: 700; }
+    #guide a { color: var(--orange-dk); font-weight: 700; }
 
     .modal-input {
       width: 100%;
-      border: 2.5px solid var(--pink-lt);
+      border: 2px solid var(--line);
       border-radius: var(--radius);
       padding: 12px 16px;
       font-size: 0.95rem;
       color: var(--text);
       outline: none;
       margin-bottom: 12px;
-      transition: border-color .2s;
+      transition: border-color .2s, box-shadow .2s;
     }
-    .modal-input:focus { border-color: var(--pink); }
+    .modal-input:focus { border-color: var(--orange); box-shadow: 0 0 0 4px rgba(255,122,24,.13); }
     .modal-label {
       display: block;
       font-size: 0.74rem;
@@ -381,7 +411,7 @@
     }
     #modal-err {
       font-size: 0.78rem;
-      color: var(--pink);
+      color: #e5453d;
       margin-bottom: 10px;
       min-height: 18px;
       line-height: 1.4;
@@ -398,17 +428,18 @@
       transition: transform .15s;
     }
     .modal-btns button:active { transform: scale(.95); }
-    #modal-cancel { background: #f3f0f8; color: var(--sub); }
+    #modal-cancel { background: #eef1f5; color: #5b6675; }
     #modal-ok {
-      background: linear-gradient(135deg, var(--pink), var(--lavender));
+      background: linear-gradient(135deg, var(--orange-lt), var(--orange-dk));
       color: #fff;
+      box-shadow: 0 4px 12px rgba(255,122,24,.30);
     }
     #modal-disconnect {
       display: none;
       width: 100%;
       margin-top: 14px;
       background: none;
-      border: 2px solid #f0d5e0;
+      border: 2px solid var(--line);
       border-radius: var(--radius);
       padding: 10px;
       font-size: 0.82rem;
@@ -417,7 +448,7 @@
       cursor: pointer;
       transition: all .18s;
     }
-    #modal-disconnect:hover { border-color: var(--pink); color: var(--pink); }
+    #modal-disconnect:hover { border-color: #f5453d; color: #f5453d; }
     .privacy-note {
       font-size: 0.7rem;
       color: var(--sub);
@@ -471,7 +502,7 @@
 
 <!-- 헤더 -->
 <header id="header-area">
-  <h1>🌸 오늘의 할일</h1>
+  <h1>✅ 오늘의 할일</h1>
   <div id="today-label"></div>
   <div id="stats">
     <span class="stat-chip" id="stat-total">전체 0</span>
@@ -504,7 +535,7 @@
 
 <!-- 빈 상태 -->
 <div id="empty">
-  <span class="emoji">🌷</span>
+  <span class="emoji">📝</span>
   <p>할일이 없어요!<br>위에서 새 할일을 추가해보세요 😊</p>
 </div>
 
